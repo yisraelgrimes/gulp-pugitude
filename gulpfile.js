@@ -4,21 +4,27 @@ var dest       = require('gulp-dest');
 var fs         = require('fs');
 var gulp       = require('gulp');
 var gulpPug    = require('gulp-pug');
-var liveServer = require('live-server');
+// var liveServer = require('live-server');
 var path       = require('path');
 var rename     = require('gulp-rename');
 var sass       = require('gulp-sass');
 var uglify     = require('gulp-uglify');
+var browserSync = require( 'browser-sync'),
+		reload      = browserSync.reload;
  
 //** FIX-ME **  auto-refresh in the browser does not function
 // Set root directory that's being server. If left blank, 
 // defaults to wherever 'gulp' command was issued.           
 // comma-separated string for paths to ignore - Does not work for some reason.
-var liveServerParams = {   
-	root: './build/html/', 
-	ignore: './build/html/layouts', 
-    wait: 200,
-};
+
+// ** REVIEW** Replaced with browser-sync to live reload when pug is updated and inject css
+// changes directly into the browser.
+// var liveServerParams = {   
+// 	root: './build/html/', 
+// 	ignore: './build/html/layouts', 
+//     wait: 200,
+// };
+
 
 var files = fs.readdirSync('src/pug/');
 
@@ -45,7 +51,8 @@ gulp.task('javascript', function(){
         .pipe(uglify())
         .on('error', swallowError)
         .pipe(rename({suffix: '.min'}))
-        .pipe(gulp.dest('./build/html/js/'));
+        .pipe(gulp.dest('./build/html/js/'))
+        .pipe(reload({stream:true}));
 });
 
 gulp.task('sass', function(){
@@ -55,20 +62,32 @@ gulp.task('sass', function(){
         .pipe(gulp.dest('./build/html/css/'))
         .pipe(cleancss())
         .pipe(rename({suffix: '.min'}))
-        .pipe(gulp.dest('./build/html/css/'));
+        .pipe(gulp.dest('./build/html/css/'))
+        .pipe(reload({stream:true}));
 });
 
 gulp.task('static', function() {
     return gulp.src('./src/img/**/*')
-        .pipe(gulp.dest('./build/html/img/'));
+        .pipe(gulp.dest('./build/html/img/'))
+        .pipe(reload({stream:true}));
 });
 
-gulp.task('default', ['fonts', 'pug', 'javascript', 'sass', 'static'], function () {
+gulp.task('watch', ['fonts', 'pug', 'javascript', 'sass', 'static'], function () {
     gulp.watch('./src/pug/**/*.pug', ['pug']);
     gulp.watch('./src/js/**/*.js', ['javascript']);
     gulp.watch('./src/scss/*.scss', ['sass']);
     gulp.watch('./src/img/**/*', ['static']);
-    liveServer.start(liveServerParams); // As replacement for using the gulp.task('live-server')
+		// ** REVIEW** Replaced with browserSync in the 'default task'
+    // liveServer.start(liveServerParams); // As replacement for using the gulp.task('live-server')
+    gulp.watch('./build/html/**/*.html', reload );
+});
+
+// Run the watch task(s) first, then run the server.
+// Serve files to browser
+gulp.task('default', ['watch'], function() {
+	browserSync({
+		server: { baseDir: './build/html/' }
+	})
 });
 
 function swallowError(error){

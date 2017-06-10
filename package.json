@@ -39,6 +39,7 @@
   },
   "homepage": "https://github.com/wandrewkeech/gulp-pugitude#readme",
   "devDependencies": {
+    "browser-sync": "^2.18.12",
     "vanilla-framework": "^1.1.11"
   }
 }
